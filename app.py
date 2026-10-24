@@ -2,6 +2,21 @@
 import streamlit as st
 import pickle
 import numpy as np
+import traceback
+
+st.title("Decision Tree Prediction App")
+
+try:
+    with open("model.pkl", "rb") as file:
+        model = pickle.load(file)
+except Exception:
+    st.error("Model load nahi ho saka. Asal error:")
+    st.code(traceback.format_exc())
+    st.stop()
+
+import streamlit as st
+import pickle
+import numpy as np
 
 st.title("Decision Tree Prediction App")
 
