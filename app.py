@@ -1,4 +1,13 @@
+import sys
+import subprocess
 
+st.write("Python version:", sys.version)
+result = subprocess.run(
+    [sys.executable, "-m", "pip", "show", "scikit-learn"],
+    capture_output=True,
+    text=True
+)
+st.code(result.stdout or result.stderr)
 import streamlit as st
 import pickle
 import numpy as np
