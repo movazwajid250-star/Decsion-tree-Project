@@ -1,25 +1,21 @@
 
 import streamlit as st
-import pickle
-import sklearn
+import sys
+import subprocess
 
-st.title("Starbucks Drink Calories Predictor")
+st.title("Dependency Test")
+st.write("Python:", sys.version)
 
-st.write("Scikit-learn version:", sklearn.__version__)
+result = subprocess.run(
+    [sys.executable, "-m", "pip", "show", "scikit-learn"],
+    capture_output=True,
+    text=True
+)
 
-try:
-    with open("model.pkl", "rb") as f:
-        model = pickle.load(f)
+st.write("Package check:")
+st.code(result.stdout or result.stderr)
 
-    st.success("Model loaded successfully!")
-
-    if hasattr(model, "feature_names_in_"):
-        st.subheader("Model input features")
-        st.write(list(model.feature_names_in_))
-    elif hasattr(model, "n_features_in_"):
-        st.write("Expected number of input features:", model.n_features_in_)
-    else:
-        st.warning("Model input features could not be detected automatically.")
-
-except Exception as e:
-    st.error(f"Model error: {e}")
+if result.returncode == 0:
+    st.success("scikit-learn is installed")
+else:
+    st.error("scikit-learn is NOT installed")
