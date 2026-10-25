@@ -1,6 +1,10 @@
 import sys
 import subprocess
+import streamlit as st
+import sys
 
+st.title("Decision Tree Model")
+st.write("Python version:", sys.version)
 st.write("Python version:", sys.version)
 result = subprocess.run(
     [sys.executable, "-m", "pip", "show", "scikit-learn"],
