@@ -1,4 +1,11 @@
+import streamlit as st
+import pickle
+from pathlib import Path
 
+MODEL_PATH = Path(__file__).parent / "model.pkl"
+
+with open(MODEL_PATH, "rb") as file:
+    model = pickle.load(file)
 import streamlit as st
 import sys
 import subprocess
