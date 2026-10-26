@@ -1,57 +1,128 @@
 
 import streamlit as st
-import sys
-import subprocess
-from pathlib import Path
-import pickle
 import joblib
+import pandas as pd
+from pathlib import Path
 
-st.title("Decision Tree Model App")
+st.set_page_config(page_title="Beverage Nutrition Predictor", page_icon="☕")
 
-st.write("Python version:", sys.version)
+st.title("☕ Beverage Nutrition Predictor")
+st.write("Starbucks beverage nutrition data using Decision Tree")
 
-# Check installed packages
-result = subprocess.run(
-    [sys.executable, "-m", "pip", "show", "scikit-learn"],
-    capture_output=True,
-    text=True
-)
-
-st.subheader("Scikit-learn package check")
-st.code(result.stdout or result.stderr)
-
-# Find model file
 MODEL_PATH = Path(__file__).parent / "model.pkl"
 
-st.subheader("Model file check")
-st.write("File exists:", MODEL_PATH.exists())
+try:
+    model = joblib.load(MODEL_PATH)
+    st.success("Model loaded successfully!")
+except Exception as e:
+    st.error(f"Model loading failed: {e}")
+    st.stop()
 
-if MODEL_PATH.exists():
-    st.write("File size:", MODEL_PATH.stat().st_size, "bytes")
+# Inspect model inputs
+st.subheader("Model Information")
 
-    model = None
+if hasattr(model, "feature_names_in_"):
+    features = list(model.feature_names_in_)
+    st.write("Model input features:", features)
+else:
+    st.warning(
+        "Model does not contain feature names. "
+        "We need the original training code to confirm input order."
+    )
+    st.write("Expected number of features:", model.n_features_in_)
+    st.stop()
 
-    # Try joblib first
+st.write("Number of features:", len(features))
+
+# These are the columns from your dataset
+numeric_features = [
+    "Calories",
+    " Total Fat (g)",
+    "Trans Fat (g) ",
+    "Saturated Fat (g)",
+    " Sodium (mg)",
+    " Total Carbohydrates (g) ",
+    "Cholesterol (mg)",
+    " Dietary Fibre (g)",
+    " Sugars (g)",
+    " Protein (g) ",
+    "Vitamin A (% DV) ",
+    "Vitamin C (% DV)",
+    " Calcium (% DV) ",
+    "Iron (% DV) ",
+    "Caffeine (mg)",
+]
+
+beverage_categories = [
+    "Coffee",
+    "Classic Espresso Drinks",
+    "Signature Espresso Drinks",
+    "Tazo Tea Drinks",
+    "Shaken Iced Beverages",
+    "Frappuccino Blended Coffee",
+    "Frappuccino Light Blended Coffee",
+    "Frappuccino Blended Crème",
+]
+
+beverage_names = [
+    "Brewed Coffee",
+    "Caffè Latte",
+    "Cappuccino",
+    "Caramel Macchiato",
+    "Mocha",
+    "White Chocolate Mocha",
+    "Espresso",
+    "Other",
+]
+
+beverage_preps = [
+    "Short",
+    "Tall",
+    "Grande",
+    "Venti",
+    "Short Nonfat Milk",
+    "2% Milk",
+    "Whole Milk",
+    "Soymilk",
+    "Other",
+]
+
+st.subheader("Enter Beverage Information")
+
+with st.form("prediction_form"):
+    values = {}
+
+    for feature in features:
+        if feature == "Beverage_category":
+            values[feature] = st.selectbox(
+                feature, beverage_categories
+            )
+        elif feature == "Beverage":
+            values[feature] = st.selectbox(
+                feature, beverage_names
+            )
+        elif feature == "Beverage_prep":
+            values[feature] = st.selectbox(
+                feature, beverage_preps
+            )
+        else:
+            values[feature] = st.number_input(
+                feature,
+                min_value=0.0,
+                value=0.0,
+                step=1.0
+            )
+
+    submitted = st.form_submit_button("Predict")
+
+if submitted:
     try:
-        model = joblib.load(MODEL_PATH)
-        st.success("Model loaded using joblib!")
+        input_df = pd.DataFrame([values], columns=features)
+        prediction = model.predict(input_df)
+
+        st.subheader("Prediction Result")
+        st.success(f"Predicted value: {prediction[0]:.2f}")
 
     except Exception as e:
-        st.warning(f"Joblib loading failed: {e}")
-
-        # Try pickle
-        try:
-            with open(MODEL_PATH, "rb") as file:
-                model = pickle.load(file)
-
-            st.success("Model loaded using pickle!")
-
-        except Exception as e2:
-            st.error("Model could not be loaded.")
-            st.exception(e2)
-
-    if model is not None:
-        st.write("Model type:", type(model).__name__)
-
-else:
-    st.error("model.pkl file not found")
+        st.error("Prediction failed")
+        st.exception(e)
